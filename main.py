@@ -9,6 +9,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.ui_elements()
         self.pushButton.clicked.connect(self.psi_graph)
+        self.checkBox.stateChanged.connect(self.set_h_method)
+
 
     def ui_elements(self):
         self.radioButtonFunctions.toggled.connect(
@@ -93,6 +95,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ax.legend()
         self.canvasGraph.draw()
         self.pushButtonReconstruct.setEnabled(True)
+
+    def set_h_method(self):
+        self.lineEditHmax.setEnabled(self.checkBox.isChecked())
+        self.lineEditHmin.setEnabled(self.checkBox.isChecked())
+        self.lineEditMh.setEnabled(self.checkBox.isChecked())
+        self.lineEdith.setEnabled(not self.checkBox.isChecked())
 
 
 if __name__ == "__main__":

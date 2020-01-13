@@ -406,6 +406,9 @@ class Ui_MainWindow(object):
         self.radioButtonUserData.setEnabled(False)
         self.tab_2.setEnabled(False)
         self.tab_3.setEnabled(False)
+        self.lineEditMh.setEnabled(False)
+        self.lineEditHmin.setEnabled(False)
+        self.lineEditHmax.setEnabled(False)
 
     def reconstruct(self):
         self.pushButtonReconstruct.setEnabled(False)
