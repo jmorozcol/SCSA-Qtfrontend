@@ -412,39 +412,60 @@ class Ui_MainWindow(object):
 
     def reconstruct(self):
         self.pushButtonReconstruct.setEnabled(False)
-        hmin = float(self.lineEditHmin.text())
-        hmax = float(self.lineEditHmax.text())
-        self.Mh = int(self.lineEditMh.text())
-        self.h = np.linspace(hmin, hmax, self.Mh)
         self.D = diffMatrix(len(self.signal), method='fourier')
-        worker = Worker(self.D, self.signal, self.h, self.Mh)
+        if self.checkBox.isChecked():
+            hmin = float(self.lineEditHmin.text())
+            hmax = float(self.lineEditHmax.text())
+            self.Mh = int(self.lineEditMh.text())
+            self.h = np.linspace(hmin, hmax, self.Mh)
 
-        worker.signals.progress.connect(self.oniterationupdate)
-        worker.signals.finished.connect(self.workerfinished)
+            worker = Worker(self.D, self.signal, self.h, self.Mh)
 
-        self.threadpool.start(worker)
+            worker.signals.progress.connect(self.oniterationupdate)
+            worker.signals.finished.connect(self.workerfinished)
 
-    def workerfinished(self, error):
+            self.threadpool.start(worker)
+        else:
+            self.h = float(self.lineEdith.text())
+            self.workerfinished(error=None)
 
+    def workerfinished(self, error=None):
+        #Clearing axes
         self.ax.clear()
-        self.holder = SCSA(self.D, self.signal, self.h[error == np.min(error)])
-        self.ax.plot(self.axis, self.signal, label='Original')
-        self.ax.plot(self.axis, self.holder.reconstructed, 'k', label='Reconstructed')
-        self.ax.legend()
-        self.ax.set_title('$Signal \\ Reconstruction$')
-        self.ax.set_xlabel('$x$')
-
-        errorGraph = np.square(self.signal - self.holder.reconstructed) / np.max(self.signal)
-
         self.ay.clear()
         self.az.clear()
-        self.ay.plot(self.axis, errorGraph)
-        self.ay.set_xlabel('$X$')
-        self.ay.set_ylabel('$(y^i - y^i_h)^2$')
-        self.az.plot(self.h, error)
-        self.az.set_xlabel('$h$')
-        self.az.set_ylabel('$MSE$')
-        self.canvasError.draw()
+
+        #auto reconstruction or single-h representation
+        if error == None:
+            self.holder = SCSA(self.D, self.signal, self.h)
+            self.ax.plot(self.axis, self.signal, label='Original')
+            self.ax.plot(self.axis, self.holder.reconstructed, 'k', label='Reconstructed')
+            self.ax.legend()
+            self.ax.set_title('$Signal \\ Reconstruction$')
+            self.ax.set_xlabel('$x$')
+
+            errorGraph = np.square(self.signal - self.holder.reconstructed) / np.max(self.signal)
+            self.ay.plot(self.axis, errorGraph)
+            self.ay.set_xlabel('$X$')
+            self.ay.set_ylabel(r'$\frac{(y^i - y^i_h)^2}{y_{max}}$')
+            self.canvasError.draw()
+        else:
+
+            self.holder = SCSA(self.D, self.signal, self.h[error == np.min(error)])
+            self.ax.plot(self.axis, self.signal, label='Original')
+            self.ax.plot(self.axis, self.holder.reconstructed, 'k', label='Reconstructed')
+            self.ax.legend()
+            self.ax.set_title('$Signal \\ Reconstruction$')
+            self.ax.set_xlabel('$x$')
+
+            errorGraph = np.square(self.signal - self.holder.reconstructed) / np.max(self.signal)
+            self.ay.plot(self.axis, errorGraph)
+            self.ay.set_xlabel('$X$')
+            self.ay.set_ylabel('$(y^i - y^i_h)^2$')
+            self.az.plot(self.h, error)
+            self.az.set_xlabel('$h$')
+            self.az.set_ylabel('$MSE$')
+            self.canvasError.draw()
 
         text = '1 <= i <=' + ' ' + str(len(self.holder.km))
 
