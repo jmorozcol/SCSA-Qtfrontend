@@ -442,7 +442,7 @@ class Ui_MainWindow(object):
         self.az.clear()
 
         #auto reconstruction or single-h representation
-        if error == None:
+        if not self.checkBox.isChecked():
             self.holder = SCSA(self.D, self.signal, self.h)
             self.ax.plot(self.axis, self.signal, label='Original')
             self.ax.plot(self.axis, self.holder.reconstructed, 'k', label='Reconstructed')
