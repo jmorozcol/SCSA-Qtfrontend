@@ -63,31 +63,44 @@ class Worker(QtCore.QRunnable):
 
     '''
 
-    def __init__(self, D, signal, h, Mh):
+    def __init__(self, D, signal, h, Mh, n = 0, state = False):
         super(Worker, self).__init__()
         self.h = h
         self.D = D
+        self.n = n
         self.signal = signal
         self.Mh = Mh
         self.signals = WorkerSignals()
+        self.state = state
 
     @QtCore.pyqtSlot()
     def run(self):
         '''
         Initialise the runner function with passed args, kwargs.
         '''
-
-        # Retrieve args/kwargs here; and fire processing using them
         error = np.linspace(0, 0, self.Mh)
-        try:
-            for i in range(self.Mh):
-                holder = SCSA(D=self.D, signal=self.signal, h=self.h[i])
-                error[i] = holder.mse
-                self.signals.progress.emit(i)
-        except:
-            print('Something went wrong')
+        if not self.state:
+        # Retrieve args/kwargs here; and fire processing using them
+            try:
+                for i in range(self.Mh):
+                    holder = SCSA(D=self.D, signal=self.signal, h=self.h[i])
+                    error[i] = holder.mse
+                    self.signals.progress.emit(i)
+            except:
+                print('Something went wrong')
+            else:
+                self.signals.finished.emit(error)  # Done
         else:
-            self.signals.finished.emit(error)  # Done
+            try:
+                for i in range(self.Mh):
+                    holder = SCSA(D=self.D, signal=self.signal, n=self.n, h=self.h[i])
+                    error[i] = holder.J
+                    self.signals.progress.emit(i)
+            except:
+                print('Something went wrong')
+            else:
+                self.signals.finished.emit(error)  # Done
+
 
 
 
@@ -440,6 +453,7 @@ class Ui_MainWindow(object):
 
     def reconstruct(self):
         self.pushButtonReconstruct.setEnabled(False)
+        self.checkBox_3.setEnabled(False)
         self.D = diffMatrix(len(self.signal), method='fourier')
         if self.checkBox.isChecked():
             hmin = float(self.lineEditHmin.text())
@@ -447,7 +461,9 @@ class Ui_MainWindow(object):
             self.Mh = int(self.lineEditMh.text())
             self.h = np.linspace(hmin, hmax, self.Mh)
 
-            worker = Worker(self.D, self.signal, self.h, self.Mh)
+            self.state = self.checkBox_3.isChecked()
+
+            worker = Worker(self.D, self.signal, self.h, self.Mh, self.state)
 
             worker.signals.progress.connect(self.oniterationupdate)
             worker.signals.finished.connect(self.workerfinished)
@@ -457,7 +473,7 @@ class Ui_MainWindow(object):
             self.h = float(self.lineEdith.text())
             self.workerfinished(error=None)
 
-    def workerfinished(self, error=None):
+    def workerfinished(self, error):
         #Clearing axes
         self.ax.clear()
         self.ay.clear()
@@ -479,7 +495,11 @@ class Ui_MainWindow(object):
             self.canvasError.draw()
         else:
 
-            self.holder = SCSA(self.D, self.signal, self.h[error == np.min(error)])
+            if not self.checkBox_3.isChecked():
+                self.holder = SCSA(self.D, self.signal, self.h[error == np.min(error)])
+            else:
+                self.holder = SCSA(self.D, self.signal, self.h[error == np.min(error)])
+
             self.ax.plot(self.axis, self.signal, label='Original')
             self.ax.plot(self.axis, self.holder.reconstructed, 'k', label='Reconstructed')
             self.ax.legend()
@@ -505,6 +525,7 @@ class Ui_MainWindow(object):
         self.actionSave_eigenvalues_and_eigenfunctions.setEnabled(True)
         self.tab_2.setEnabled(True)
         self.tab_3.setEnabled(True)
+        self.checkBox_3.setEnabled(True)
 
     def graph(self):
         self.ax.clear()
