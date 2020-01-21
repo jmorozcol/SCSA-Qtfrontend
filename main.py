@@ -10,6 +10,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ui_elements()
         self.pushButton.clicked.connect(self.psi_graph)
         self.checkBox.stateChanged.connect(self.set_h_method)
+        self.checkBox_3.stateChanged.connect(self.set_denoise_stuff)
 
 
     def ui_elements(self):
@@ -101,6 +102,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.lineEditHmin.setEnabled(self.checkBox.isChecked())
         self.lineEditMh.setEnabled(self.checkBox.isChecked())
         self.lineEdith.setEnabled(not self.checkBox.isChecked())
+
+    def set_denoise_stuff(self):
+        self.lineEdit_9.setEnabled(self.checkBox_3.isChecked())
+        self.comboBox.setEnabled(self.checkBox_3.isChecked())
 
 
 if __name__ == "__main__":
