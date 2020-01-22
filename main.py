@@ -106,6 +106,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def set_denoise_stuff(self):
         self.lineEdit_9.setEnabled(self.checkBox_3.isChecked())
         self.comboBox.setEnabled(self.checkBox_3.isChecked())
+        self.lineEdit_10.setEnabled(self.checkBox_3.isChecked())
 
 
 if __name__ == "__main__":

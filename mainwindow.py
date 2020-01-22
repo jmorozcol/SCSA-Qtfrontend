@@ -200,6 +200,13 @@ class Ui_MainWindow(object):
         self.checkBox_3 = QtWidgets.QCheckBox(self.tab)
         self.checkBox_3.setObjectName("checkBox_3")
         self.gridLayout_10.addWidget(self.checkBox_3, 1, 0, 1, 1)
+        self.label_27 = QtWidgets.QLabel(self.tab)
+        self.label_27.setObjectName("label_27")
+        self.gridLayout_10.addWidget(self.label_27, 4, 0, 1, 1)
+        self.lineEdit_10 = QtWidgets.QLineEdit(self.tab)
+        self.lineEdit_10.setAlignment(QtCore.Qt.AlignCenter)
+        self.lineEdit_10.setObjectName("lineEdit_10")
+        self.gridLayout_10.addWidget(self.lineEdit_10, 4, 1, 1, 1)
         self.gridLayout_4.addLayout(self.gridLayout_10, 4, 0, 1, 1)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
@@ -416,6 +423,7 @@ class Ui_MainWindow(object):
         self.label_7.setText(_translate("MainWindow", "x_max"))
         self.label_4.setText(_translate("MainWindow", "N"))
         self.label_8.setText(_translate("MainWindow", "SP Functions"))
+        self.label_27.setText(_translate("MainWindow", "Denoising parameter"))
         self.comboBoxFunctions.setItemText(0, _translate("MainWindow", "Dawson Integral"))
         self.comboBoxFunctions.setItemText(1, _translate("MainWindow", "Weierstrass function"))
         self.comboBoxFunctions.setItemText(2, _translate("MainWindow", "Rectangular pulse"))
@@ -423,6 +431,8 @@ class Ui_MainWindow(object):
         self.lineEdit_2.setText(_translate("MainWindow", "3"))
         self.lineEdit_3.setText(_translate("MainWindow", "2"))
         self.lineEdit_4.setText(_translate("MainWindow", "1"))
+        self.lineEdit_9.setText(_translate("MainWindow", "1"))
+        self.lineEdit_10.setText(_translate("MainWindow", "1"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Reconstruction"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Errors"))
         self.label_10.setText(_translate("MainWindow", "First plot"))
@@ -450,6 +460,7 @@ class Ui_MainWindow(object):
         self.lineEditHmax.setEnabled(False)
         self.lineEdit_9.setEnabled(False)
         self.comboBox.setEnabled(False)
+        self.lineEdit_10.setEnabled(False)
 
     def reconstruct(self):
         self.pushButtonReconstruct.setEnabled(False)
@@ -460,10 +471,11 @@ class Ui_MainWindow(object):
             hmax = float(self.lineEditHmax.text())
             self.Mh = int(self.lineEditMh.text())
             self.h = np.linspace(hmin, hmax, self.Mh)
+            self.n = float(self.lineEdit_10.text())
 
             self.state = self.checkBox_3.isChecked()
 
-            worker = Worker(self.D, self.signal, self.h, self.Mh, self.state)
+            worker = Worker(D=self.D, signal=self.signal, h=self.h, Mh=self.Mh, n=self.n, state=self.state)
 
             worker.signals.progress.connect(self.oniterationupdate)
             worker.signals.finished.connect(self.workerfinished)
@@ -509,10 +521,10 @@ class Ui_MainWindow(object):
             errorGraph = np.square(self.signal - self.holder.reconstructed) / np.max(self.signal)
             self.ay.plot(self.axis, errorGraph)
             self.ay.set_xlabel('$X$')
-            self.ay.set_ylabel('$(y^i - y^i_h)^2$')
+            self.ay.set_ylabel(r'$\frac{(y^i - y^i_h)^2}{y_{max}}$')
             self.az.plot(self.h, error)
             self.az.set_xlabel('$h$')
-            self.az.set_ylabel('$MSE$')
+            self.az.set_ylabel(r'$J$')
             self.canvasError.draw()
 
         text = '1 <= i <=' + ' ' + str(len(self.holder.km))
@@ -547,7 +559,13 @@ class Ui_MainWindow(object):
             else:
                 signal = (np.sign(np.sin(np.pi*self.axis)) + 1)/2
 
-        self.signal = signal
+        if self.checkBox_3.isChecked():
+            e = np.random.rand(len(signal))
+            e = e - np.mean(e)
+            self.signal = signal + float(self.lineEdit_9.text())*e
+        else:
+            self.signal = signal
+
         self.ax.plot(self.axis, self.signal, label='Original')
         self.ax.legend()
         self.ax.set_title('$Signal \\ Reconstruction$')
